@@ -32,6 +32,7 @@ def _text_from_gpx(gpx: GPX) -> str:
         values.extend(element.tag.rsplit("}", 1)[-1] + " " + (element.text or "") for element in extension.iter())
     for track in gpx.tracks:
         values.extend([track.name or "", track.description or ""])
+        values.extend([getattr(track, "type", "") or ""])
         for extension in getattr(track, "extensions", None) or []:
             values.extend(element.tag.rsplit("}", 1)[-1] + " " + (element.text or "") for element in extension.iter())
     return " ".join(values).casefold()
