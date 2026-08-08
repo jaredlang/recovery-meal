@@ -68,12 +68,14 @@ describe("App", () => {
 
     const { container } = render(<App />);
 
+    fireEvent.click(screen.getByRole("button", { name: /workout/i }));
     fireEvent.click(screen.getByRole("button", { name: /upload workout/i }));
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(fileInput, {
       target: { files: [new File(["gpx"], "run.gpx", { type: "application/gpx+xml" })] },
     });
 
+    expect(screen.getByText(/uploading workout/i)).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText(/review workout/i)).toBeInTheDocument());
 
     fireEvent.change(screen.getByLabelText(/activity/i), { target: { value: "running" } });
