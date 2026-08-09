@@ -1,0 +1,56 @@
+name: recovery-meal-e2e
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: recovery_meal_e2e
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d recovery_meal_e2e"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://app:app@db:5432/recovery_meal_e2e
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      OPENAI_IMAGE_MODEL: ${OPENAI_IMAGE_MODEL:-gpt-image-2}
+      AI_MODE: ${E2E_AI_MODE:-fake}
+      IMAGE_MODE: ${E2E_IMAGE_MODE:-fake}
+      APP_ENV: e2e
+      UPLOAD_DIR: /app/uploads
+      CORS_ORIGINS: http://localhost:5184,http://127.0.0.1:5184
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8010:8000"
+    tmpfs:
+      - /app/uploads
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+  frontend-v2:
+    build: ./frontend-v2
+    environment:
+      VITE_API_URL: http://127.0.0.1:8010/api/v1
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "5184:5174"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:5174').then(response => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 2s
+      timeout: 3s
+      retries: 30

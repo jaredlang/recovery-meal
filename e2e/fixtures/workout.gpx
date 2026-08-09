@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Recovery Meal E2E" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Morning training route</name>
+  </metadata>
+  <trk>
+    <name>Neighborhood training route</name>
+    <trkseg>
+      <trkpt lat="41.878100" lon="-87.629800"><ele>181.0</ele></trkpt>
+      <trkpt lat="41.879100" lon="-87.626800"><ele>184.0</ele></trkpt>
+      <trkpt lat="41.881100" lon="-87.623800"><ele>188.0</ele></trkpt>
+      <trkpt lat="41.883100" lon="-87.621800"><ele>186.0</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

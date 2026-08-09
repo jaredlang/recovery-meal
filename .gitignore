@@ -7,6 +7,9 @@ __pycache__/
 node_modules/
 frontend/dist/
 frontend-v2/dist/
+e2e/node_modules/
+e2e/test-results/
+e2e/playwright-report/
 
 backend/.venv/
 backend/.vscode/

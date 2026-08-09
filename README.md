@@ -45,3 +45,23 @@ npm install
 npm test
 npm run build
 ```
+
+## Full-stack browser test
+
+The dedicated Playwright suite drives Chromium through the V2 UI while using the real FastAPI service and a disposable PostgreSQL database. It runs on isolated ports (`5184` for the browser app and `8010` for the API), and it removes its containers, temporary database, and uploaded media after every run. Docker must be running; install the browser once after installing dependencies:
+
+```sh
+cd e2e
+npm install
+npx playwright install chromium
+npm test
+```
+
+The default run uses deterministic fake AI and images and is the browser regression check used by pull requests. To explicitly validate live meal generation, food matching, activity classification, and all three generated meal images:
+
+```sh
+cd e2e
+OPENAI_API_KEY=your-key npm run test:live
+```
+
+In PowerShell, set the key first with `$env:OPENAI_API_KEY = "your-key"`. The live suite incurs API usage and is only available through the manually dispatched **Live AI Browser E2E** GitHub Actions workflow. Add `OPENAI_API_KEY` as a repository Actions secret before running it. Failure traces, screenshots, videos, and the HTML report are retained as workflow artifacts.
