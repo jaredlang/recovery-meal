@@ -110,11 +110,22 @@ docker compose -f ../docker-compose.e2e.yml down --volumes --remove-orphans
 
 This command affects only resources owned by the `recovery-meal-e2e` Compose project. It does not remove development-stack data.
 
-## Failure artifacts
+## Test artifacts and screenshots
 
-Failed Playwright runs retain evidence under:
+Each successful journey attaches eight full-page checkpoint screenshots to the Playwright report:
 
-- `test-results/`: trace, screenshot, video, and error context
+1. `01-profile-saved.png`
+2. `02-pantry-populated.png`
+3. `03-workout-review.png`
+4. `04-meal-options.png`
+5. `05-meal-detail.png`
+6. `06-favorites.png`
+7. `07-home-dashboard.png`
+8. `08-progress.png`
+
+The screenshots capture the complete web page viewport context with `fullPage: true`; browser chrome is not included. Test runs retain evidence under:
+
+- `test-results/`: checkpoint screenshots, trace, screenshot, video, and error context
 - `playwright-report/`: HTML report
 
 Open the HTML report with:
@@ -129,4 +140,4 @@ Open an individual trace with:
 npx playwright show-trace test-results/<test-directory>/trace.zip
 ```
 
-Both artifact directories are ignored by Git. GitHub Actions uploads them when an automated browser test fails.
+Both artifact directories are ignored by Git. GitHub Actions uploads them for successful and failed automated browser tests.

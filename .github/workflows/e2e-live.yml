@@ -29,7 +29,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: npm run test:live
       - name: Upload browser failure evidence
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-live-ai-failure
