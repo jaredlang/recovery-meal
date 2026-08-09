@@ -9,7 +9,9 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Open [http://localhost:5173](http://localhost:5173). The default `AI_MODE=fake` makes the complete workflow deterministic and does not consume model calls. Set `AI_MODE=live` and provide `OPENAI_API_KEY` to test the OpenAI adapter.
+Open the original frontend at [http://localhost:5173](http://localhost:5173), or the redesigned V2 experience at [http://localhost:5174](http://localhost:5174). Both use the same API and database.
+
+`AI_MODE=fake` makes meal generation deterministic. Meal photography is separately controlled by `IMAGE_MODE`: keep it at `fake` for a deterministic local illustration, or set `IMAGE_MODE=live` with `OPENAI_API_KEY` to generate and persist a GPT Image 2 photograph for each recipe. `OPENAI_IMAGE_MODEL` defaults to `gpt-image-2`.
 
 The API is available at [http://localhost:8000/docs](http://localhost:8000/docs). PostgreSQL runs locally in Docker. A hosted PostgreSQL provider such as Supabase can be used by changing `DATABASE_URL`.
 
@@ -37,5 +39,9 @@ cd backend
 pytest
 cd ../frontend
 npm install
+npm run build
+cd ../frontend-v2
+npm install
+npm test
 npm run build
 ```

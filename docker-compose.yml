@@ -18,7 +18,9 @@ services:
       DATABASE_URL: postgresql+psycopg://app:app@db:5432/recovery_meal
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      OPENAI_IMAGE_MODEL: ${OPENAI_IMAGE_MODEL:-gpt-image-2}
       AI_MODE: ${AI_MODE:-live}
+      IMAGE_MODE: ${IMAGE_MODE:-live}
       APP_ENV: development
       UPLOAD_DIR: /app/uploads
     depends_on:
@@ -32,6 +34,12 @@ services:
       VITE_API_URL: http://localhost:8000/api/v1
     depends_on: [backend]
     ports: ["5173:5173"]
+  frontend-v2:
+    build: ./frontend-v2
+    environment:
+      VITE_API_URL: http://localhost:8000/api/v1
+    depends_on: [backend]
+    ports: ["5174:5174"]
 
 volumes:
   postgres_data:
