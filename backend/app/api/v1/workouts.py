@@ -12,11 +12,12 @@ from app.api.v1.profile import current_profile
 from app.calculations.met_v1 import met_for
 from app.calculations.recovery_v1 import CALCULATION_VERSION, calculate_recovery
 from app.db.session import get_db
-from app.models import MealRecommendation, RecoveryTarget, UserProfile, Workout
+from app.models import FavoriteMeal, MealRecommendation, RecoveryTarget, UserProfile, Workout
 from app.schemas.recommendation import MealResponse, RecommendationsResponse
 from app.schemas.workout import RangeResponse, RecoveryResponse, WeightInput, WorkoutCorrection, WorkoutResponse
 from app.services.recommendation_service import generate_recommendations
 from app.services.workout_service import SUPPORTED_ACTIVITIES, calculate_fields, parse_gpx
+from app.services.media import media_url
 from app.config import settings
 
 router = APIRouter(prefix="/workouts", tags=["workouts"])
@@ -139,7 +140,25 @@ def create_recovery_target(workout_id: UUID, payload: WeightInput, db: Session =
     )
 
 
-def meal_response(meal: MealRecommendation) -> MealResponse:
+@router.get("/{workout_id}/recovery-target", response_model=RecoveryResponse)
+def read_recovery_target(workout_id: UUID, db: Session = Depends(get_db)):
+    workout = get_workout(db, workout_id)
+    target = workout.recovery_target
+    if target is None:
+        raise ApiError(404, "RECOVERY_TARGET_NOT_FOUND", "Recovery target not found.")
+    return RecoveryResponse(
+        workout_id=workout.id,
+        protein_g=RangeResponse(low=target.protein_g_low, high=target.protein_g_high),
+        carbs_g=RangeResponse(low=target.carbs_g_low, high=target.carbs_g_high),
+        fluid_ml=RangeResponse(low=target.fluid_ml_low, high=target.fluid_ml_high) if target.fluid_ml_low is not None else None,
+        calculation_version=target.calculation_version,
+    )
+
+
+def meal_response(meal: MealRecommendation, db: Session | None = None) -> MealResponse:
+    favorite = False
+    if db is not None:
+        favorite = db.query(FavoriteMeal).filter_by(recommendation_id=meal.id).first() is not None
     return MealResponse(
         id=meal.id,
         category=meal.category,
@@ -155,6 +174,10 @@ def meal_response(meal: MealRecommendation) -> MealResponse:
         missing_ingredients=meal.missing_ingredients,
         recovery_match_score=meal.recovery_match_score,
         selected=meal.selected,
+        selected_at=meal.selected_at,
+        image_status=meal.image_status,
+        image_url=media_url(meal.image_filename),
+        favorite=favorite,
     )
 
 
@@ -176,11 +199,11 @@ def create_recommendations(workout_id: UUID, db: Session = Depends(get_db)):
     db.commit()
     for meal in new_meals:
         db.refresh(meal)
-    return RecommendationsResponse(recommendations=[meal_response(meal) for meal in new_meals])
+    return RecommendationsResponse(recommendations=[meal_response(meal, db) for meal in new_meals])
 
 
 @router.get("/{workout_id}/recommendations", response_model=RecommendationsResponse)
 def list_recommendations(workout_id: UUID, db: Session = Depends(get_db)):
     workout = get_workout(db, workout_id)
     meals = db.query(MealRecommendation).filter_by(workout_id=workout.id).order_by(MealRecommendation.created_at).all()
-    return RecommendationsResponse(recommendations=[meal_response(meal) for meal in meals])
+    return RecommendationsResponse(recommendations=[meal_response(meal, db) for meal in meals])

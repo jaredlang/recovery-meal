@@ -32,10 +32,14 @@ def test_activity_inference_falls_back_to_unknown():
 
 
 def test_infer_activity_type_handles_missing_type_attribute():
+    class ClassifierWithoutFilenameAssumption:
+        def classify(self, context):
+            return "cycling"
+
     class GPX:
         name = None
         description = None
         creator = None
         tracks = []
 
-    assert infer_activity_type(GPX(), "session.gpx", StubActivityClassifier()) == "cycling"
+    assert infer_activity_type(GPX(), "session.gpx", ClassifierWithoutFilenameAssumption()) == "cycling"

@@ -25,11 +25,16 @@ class UserProfile(Base):
     favorite_foods: Mapped[list] = mapped_column(JSON, default=list)
     max_prep_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     unit_preference: Mapped[str] = mapped_column(String(20), default="metric")
+    display_name: Mapped[str] = mapped_column(String(120), default="Athlete")
+    email: Mapped[str | None] = mapped_column(String(254), nullable=True)
+    timezone: Mapped[str] = mapped_column(String(80), default="UTC")
+    avatar_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
 
     inventory: Mapped[list["InventoryItem"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
     workouts: Mapped[list["Workout"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
+    favorites: Mapped[list["FavoriteMeal"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
 
 
 class InventoryItem(Base):
@@ -108,7 +113,24 @@ class MealRecommendation(Base):
     missing_ingredients: Mapped[list] = mapped_column(JSON, default=list)
     recovery_match_score: Mapped[float] = mapped_column(Float)
     selected: Mapped[bool] = mapped_column(Boolean, default=False)
+    selected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    image_status: Mapped[str] = mapped_column(String(20), default="pending")
+    image_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
     workout: Mapped[Workout] = relationship(back_populates="recommendations")
+
+
+class FavoriteMeal(Base):
+    __tablename__ = "favorite_meal"
+    __table_args__ = (UniqueConstraint("profile_id", "recommendation_id", name="uq_favorite_profile_recommendation"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    profile_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user_profile.id", ondelete="CASCADE"))
+    recommendation_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("meal_recommendation.id", ondelete="SET NULL"), nullable=True)
+    snapshot: Mapped[dict] = mapped_column(JSON)
+    image_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+    profile: Mapped[UserProfile] = relationship(back_populates="favorites")
 

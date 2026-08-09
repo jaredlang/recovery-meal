@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -36,8 +37,20 @@ class MealResponse(BaseModel):
     missing_ingredients: list[str]
     recovery_match_score: float
     selected: bool
+    selected_at: datetime | None = None
+    image_status: str = "pending"
+    image_url: str | None = None
+    favorite: bool = False
 
 
 class RecommendationsResponse(BaseModel):
     recommendations: list[MealResponse]
+
+
+class FavoriteResponse(BaseModel):
+    id: UUID
+    recommendation_id: UUID | None
+    meal: dict
+    image_url: str | None
+    created_at: datetime
 

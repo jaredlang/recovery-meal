@@ -1,4 +1,4 @@
-from app.models.models import InventoryItem, MealRecommendation, RecoveryTarget, UserProfile, Workout
+from app.models.models import FavoriteMeal, InventoryItem, MealRecommendation, RecoveryTarget, UserProfile, Workout
 
-__all__ = ["InventoryItem", "MealRecommendation", "RecoveryTarget", "UserProfile", "Workout"]
+__all__ = ["FavoriteMeal", "InventoryItem", "MealRecommendation", "RecoveryTarget", "UserProfile", "Workout"]
 
