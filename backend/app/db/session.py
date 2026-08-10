@@ -8,7 +8,9 @@ class Base(DeclarativeBase):
     pass
 
 
-engine = create_engine(settings.database_url, pool_pre_ping=True)
+# pool_recycle keeps hosted poolers (Supabase Supavisor) from handing back a
+# connection they have already dropped after an idle period.
+engine = create_engine(settings.database_url, pool_pre_ping=True, pool_recycle=1800)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
