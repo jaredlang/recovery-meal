@@ -88,6 +88,11 @@ if [[ "$FRONTEND_ONLY" != true ]]; then
   docker push "${IMAGE}:latest"
 
   printf '\n== Deploying Cloud Run ==\n'
+  # Git Bash rewrites any argument that looks like a POSIX path into a Windows path
+  # (UPLOAD_DIR=/app/uploads became UPLOAD_DIR=C:/Program Files/Git/app/uploads). Exclude
+  # only the two flags carrying container paths -- a blanket '*' also breaks the gcloud
+  # wrapper, which needs the translation to locate gcloud.py. No-op on Linux/macOS.
+  MSYS2_ARG_CONV_EXCL='--set-env-vars=;--add-volume-mount=' \
   gcloud run deploy "$SERVICE" \
     --project="$PROJECT_ID" \
     --region="$REGION" \
@@ -102,10 +107,21 @@ if [[ "$FRONTEND_ONLY" != true ]]; then
     --set-secrets="DATABASE_URL=DATABASE_URL:latest,OPENAI_API_KEY=OPENAI_API_KEY:latest" \
     --set-env-vars="APP_ENV=production,AI_MODE=live,IMAGE_MODE=live,UPLOAD_DIR=/app/uploads" \
     --add-volume="name=media,type=cloud-storage,bucket=${BUCKET}" \
-    ## //app/uploads tells Git Bash to bypass its automatic path translation in Windows
-    --volume-mount="name=media,mount-path=//app/uploads"
+    --add-volume-mount="volume=media,mount-path=/app/uploads"
 
-  URL=$(gcloud run services describe "$SERVICE" --project="$PROJECT_ID" --region="$REGION" --format="value(status.url)" | tr -d '\n')
+  # Both of these have silently regressed before: media landed on the container's
+  # ephemeral disk and vanished on restart, with no error anywhere.
+  DEPLOYED=$(gcloud run services describe "$SERVICE" --project="$PROJECT_ID" --region="$REGION" --format=json)
+  if ! printf '%s' "$DEPLOYED" | grep -q '"mountPath": "/app/uploads"'; then
+    printf 'ERROR: bucket %s is not mounted at /app/uploads; media would not persist.\n' "$BUCKET" >&2
+    exit 1
+  fi
+  if ! printf '%s' "$DEPLOYED" | grep -A1 '"name": "UPLOAD_DIR"' | grep -q '"value": "/app/uploads"'; then
+    printf 'ERROR: UPLOAD_DIR is not /app/uploads; check shell path translation.\n' >&2
+    exit 1
+  fi
+
+  URL=$(gcloud run services describe "$SERVICE" --project="$PROJECT_ID" --region="$REGION" --format="value(status.url)" | tr -d '\r\n')
   printf 'API: %s\n' "$URL"
   curl -fsS "$URL/health"
   printf '\n'
