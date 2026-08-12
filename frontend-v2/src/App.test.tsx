@@ -8,12 +8,13 @@ vi.mock("./api", async importOriginal => {
   return {
     ...actual,
     getAccount: vi.fn(), getDashboard: vi.fn(), getInventory: vi.fn(), addInventory: vi.fn(), deleteInventory: vi.fn(),
-    getRecovery: vi.fn(), getMeals: vi.fn(), generateMeals: vi.fn(), generateImage: vi.fn(), favoriteMeal: vi.fn(), unfavoriteMeal: vi.fn(), selectMeal: vi.fn(),
+    getRecovery: vi.fn(), getMeals: vi.fn(), getMeal: vi.fn(), generateMeals: vi.fn(), generateImage: vi.fn(), favoriteMeal: vi.fn(), unfavoriteMeal: vi.fn(), selectMeal: vi.fn(),
   };
 });
 
 const mocked = vi.mocked(api);
 const account = { display_name: "Alex Morgan", email: "alex@example.com", timezone: "UTC", avatar_url: null };
+const meal = { id: "meal-1", category: "bowl", name: "Salmon rice bowl", ingredients: [], preparation_steps: ["Cook and serve."], prep_minutes: 20, estimated_calories: 600, protein_g: 35, carbs_g: 70, fat_g: 20, rationale: "Balanced recovery meal", missing_ingredients: [], recovery_match_score: 1, selected: false, selected_at: null, image_status: "ready", image_url: null, favorite: false };
 
 describe("Recovery Meal V2", () => {
   beforeEach(() => {
@@ -47,5 +48,16 @@ describe("Recovery Meal V2", () => {
     render(<App />);
     expect(await screen.findByText(/Ready for tailored meals/i)).toBeInTheDocument();
     expect(screen.getByText("20–30 g")).toBeInTheDocument();
+  });
+
+  it("confirms when a meal is selected from its detail page", async () => {
+    history.replaceState({}, "", "/meals/meal-1");
+    mocked.getMeal.mockResolvedValue(meal);
+    mocked.selectMeal.mockResolvedValue({ id: "meal-1", selected: true, selected_at: "2026-08-12T12:00:00Z" });
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "I'm making this" }));
+    await waitFor(() => expect(mocked.selectMeal).toHaveBeenCalledWith("meal-1"));
+    expect(await screen.findByText(/Meal selected\. You're all set to make it\./i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /I'm making this/i })).toBeDisabled();
   });
 });
