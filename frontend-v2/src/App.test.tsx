@@ -44,9 +44,15 @@ describe("Recovery Meal V2", () => {
   it("restores meal options from URL-backed workout state", async () => {
     history.replaceState({}, "", "/get-meal/options/workout-1");
     mocked.getRecovery.mockResolvedValue({ workout_id: "workout-1", protein_g: { low: 20, high: 30 }, carbs_g: { low: 40, high: 60 }, fluid_ml: null, calculation_version: "v1" });
-    mocked.getMeals.mockResolvedValue({ recommendations: [] });
+    mocked.getMeals.mockResolvedValue({ recommendations: [
+      { ...meal, category: "best_recovery_match" },
+      { ...meal, id: "meal-2", category: "fastest", name: "Quick yogurt bowl" },
+      { ...meal, id: "meal-3", category: "best_use_of_inventory", name: "Pantry omelet" },
+    ] });
     render(<App />);
-    expect(await screen.findByText(/Ready for tailored meals/i)).toBeInTheDocument();
+    expect(await screen.findByText("★ Best for recovery")).toBeInTheDocument();
+    expect(await screen.findByText("◷ Fastest")).toBeInTheDocument();
+    expect(await screen.findByText("▣ Best use of inventory")).toBeInTheDocument();
     expect(screen.getByText("20–30 g")).toBeInTheDocument();
   });
 

@@ -50,10 +50,17 @@ export function MealPhoto({ meal, className = "" }: { meal: Pick<Meal, "name" | 
 
 export function Stat({ icon, label, value }: { icon: string; label: string; value: ReactNode }) { return <div className="stat"><span>{icon}</span><div><small>{label}</small><strong>{value}</strong></div></div>; }
 
+const mealOptionBadges: Record<string, string> = {
+  best_recovery_match: "★ Best for recovery",
+  fastest: "◷ Fastest",
+  best_use_of_inventory: "▣ Best use of inventory",
+};
+
 export function MealCard({ meal, featured = false, onSelect, onFavorite }: { meal: Meal; featured?: boolean; onSelect: () => void; onFavorite: () => void }) {
+  const badge = mealOptionBadges[meal.category];
   return <article className={`meal-card ${featured ? "featured" : ""}`}>
     <MealPhoto meal={meal} />
-    <div className="meal-card-body">{featured && <span className="best-badge">★ Best for recovery</span>}<div className="meal-title-row"><h2>{meal.name}</h2><button className={`icon-button ${meal.favorite ? "liked" : ""}`} onClick={onFavorite} aria-label="Toggle favorite">{meal.favorite ? "♥" : "♡"}</button></div>
+    <div className="meal-card-body">{badge && <span className="best-badge">{badge}</span>}<div className="meal-title-row"><h2>{meal.name}</h2><button className={`icon-button ${meal.favorite ? "liked" : ""}`} onClick={onFavorite} aria-label="Toggle favorite">{meal.favorite ? "♥" : "♡"}</button></div>
       <div className="macro-row"><span>◷ <b>{meal.prep_minutes}</b> min</span><span>♨ <b>{meal.estimated_calories}</b> kcal</span><span>◡ <b>{meal.protein_g}</b>g protein</span><span>⌁ <b>{meal.carbs_g}</b>g carbs</span></div>
       <div className="fit-row"><span>● Recovery fit</span><b>{meal.recovery_match_score >= 1 ? "Excellent" : meal.recovery_match_score >= .8 ? "Very good" : "Good"}</b></div>
       <div className="fit-row"><span>● Ingredients</span><b>{meal.missing_ingredients.length ? `${meal.missing_ingredients.length} missing` : "All on hand"}</b></div>
