@@ -9,7 +9,7 @@ from app.ai.meal_generator import get_meal_generator
 from app.api.errors import ApiError
 from app.api.v1.profile import current_profile
 from app.db.session import get_db
-from app.models import GroceryLine, PlannedWorkout
+from app.models import GroceryLine, InventoryItem, PlannedWorkout
 from app.schemas.planning import (
     GroceryLineCheck,
     PlannedMealSubstitution,
@@ -173,5 +173,7 @@ def check_grocery_line(line_id: UUID, payload: GroceryLineCheck, db: Session = D
     if line.available_at_home:
         raise ApiError(422, "PANTRY_ITEM_NOT_SHOPPABLE", "Items already at home cannot be checked off a grocery list.")
     line.checked = payload.checked
+    if payload.checked and not db.query(InventoryItem).filter_by(profile_id=profile.id, normalized_name=line.normalized_name).first():
+        db.add(InventoryItem(profile_id=profile.id, name=line.name, normalized_name=line.normalized_name))
     db.commit()
     return plan_response(profile, line.weekly_plan)
