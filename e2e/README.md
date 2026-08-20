@@ -73,15 +73,16 @@ Confirm that the API reports `{"status":"ok"}` at <http://127.0.0.1:8010/health>
 1. On the welcome screen, select **Create profile**.
 2. Enter a display name, email, age, height, weight, fitness goal, and maximum preparation time. Add favorite foods and foods to avoid, then select **Save changes**.
 3. Open **Pantry** and add `chicken`, `brown rice`, and `banana`.
-4. Open **Get Meal**, choose the file [`fixtures/workout.gpx`](fixtures/workout.gpx), and wait for the workout review screen.
-5. Set the activity to **Running** and duration to `45` minutes.
-6. Enter `70` kg as the pre-workout weight and `69.5` kg as the post-workout weight.
-7. Select **Calculate recovery & continue** and confirm that protein, carbohydrate, and hydration targets appear.
-8. Select **Generate meal options** and verify that three meals and three loaded images appear.
-9. Favorite the first meal, select it, and verify its recipe, ingredients, preparation steps, nutrition, and image.
-10. Open **Favorites** and confirm that the meal is present.
-11. Open **Home** and confirm that the latest workout and selected recovery meal are displayed.
-12. Open **Progress** and confirm that today's workout, selected meal, and one-day streak are displayed.
+4. Open **Plan**, add a moderate `Trail running` workout, generate its recovery meals, and select **Simple Oat Recovery Bowl**. Confirm the chicken is already at home, check one grocery item, and collapse then expand the week.
+5. Open **Get Meal**, choose the file [`fixtures/workout.gpx`](fixtures/workout.gpx), and wait for the workout review screen.
+6. Set the activity to **Running** and duration to `45` minutes.
+7. Enter `70` kg as the pre-workout weight and `69.5` kg as the post-workout weight.
+8. Select **Calculate recovery & continue** and confirm that protein, carbohydrate, and hydration targets appear.
+9. Select **Generate meal options** and verify that three meals and three loaded images appear.
+10. Favorite the first meal, select it, and verify its recipe, ingredients, preparation steps, nutrition, and image.
+11. Open **Favorites** and confirm that the meal is present.
+12. Open **Home** and confirm that the latest workout and selected recovery meal are displayed.
+13. Open **Progress** and confirm that today's workout, selected meal, and one-day streak are displayed.
 
 ### 3. Optional failure checks
 
@@ -112,16 +113,17 @@ This command affects only resources owned by the `recovery-meal-e2e` Compose pro
 
 ## Test artifacts and screenshots
 
-Each successful journey attaches eight full-page checkpoint screenshots to the Playwright report:
+Each successful journey attaches nine full-page checkpoint screenshots to the Playwright report:
 
 1. `01-profile-saved.png`
 2. `02-pantry-populated.png`
-3. `03-workout-review.png`
-4. `04-meal-options.png`
-5. `05-meal-detail.png`
-6. `06-favorites.png`
-7. `07-home-dashboard.png`
-8. `08-progress.png`
+3. `03-weekly-plan.png`
+4. `04-workout-review.png`
+5. `05-meal-options.png`
+6. `06-meal-detail.png`
+7. `07-favorites.png`
+8. `08-home-dashboard.png`
+9. `09-progress.png`
 
 The screenshots capture the complete web page viewport context with `fullPage: true`; browser chrome is not included. Test runs retain evidence under:
 

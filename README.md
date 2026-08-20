@@ -24,6 +24,17 @@ The API is available at [http://localhost:8000/docs](http://localhost:8000/docs)
 5. Optionally provide pre/post workout weights for a fluid target.
 6. Calculate recovery, generate meals, and select one.
 
+## Weekly planning
+
+The V2 app also includes a rolling next-seven-days planning view at `/plan`.
+
+1. Add future workouts manually with a date, activity, duration, and expected intensity.
+2. For moderate and high-intensity sessions, generate and select one recovery meal before it contributes ingredients to the weekly grocery list.
+3. Replace a selected meal ingredient with a compatible suggested alternative when needed.
+4. Shop from the category-grouped in-app checklist. Pantry matches move to `Already at home`.
+
+Pantry reconciliation in this first version is name-level only: a matching pantry item covers the planned ingredient without tracking package size, quantity, expiry, or consumption. The planner deliberately does not generate workout programs, plan every household meal, export lists, connect to retailers, or automate grocery ordering and delivery.
+
 The backend uses deterministic calculations for distance, duration, intensity, exercise energy, and recovery targets. Activity type is inferred by the structured AI activity classifier; uncertain or unavailable inference becomes `unknown` and the UI asks the user to correct it. AI also handles meal synthesis, food matching, and explanation. Generated nutrition is labeled as estimated; calories are derived from the returned macros.
 
 ## Calculation notes

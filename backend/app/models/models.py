@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, JSON, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -35,6 +35,7 @@ class UserProfile(Base):
     inventory: Mapped[list["InventoryItem"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
     workouts: Mapped[list["Workout"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
     favorites: Mapped[list["FavoriteMeal"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
+    weekly_plans: Mapped[list["WeeklyPlan"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
 
 
 class InventoryItem(Base):
@@ -133,4 +134,80 @@ class FavoriteMeal(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
     profile: Mapped[UserProfile] = relationship(back_populates="favorites")
+
+
+class WeeklyPlan(Base):
+    __tablename__ = "weekly_plan"
+    __table_args__ = (UniqueConstraint("profile_id", "starts_on", name="uq_weekly_plan_profile_start"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    profile_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user_profile.id", ondelete="CASCADE"))
+    starts_on: Mapped[date] = mapped_column(Date)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
+
+    profile: Mapped[UserProfile] = relationship(back_populates="weekly_plans")
+    planned_workouts: Mapped[list["PlannedWorkout"]] = relationship(back_populates="weekly_plan", cascade="all, delete-orphan")
+    grocery_lines: Mapped[list["GroceryLine"]] = relationship(back_populates="weekly_plan", cascade="all, delete-orphan")
+
+
+class PlannedWorkout(Base):
+    __tablename__ = "planned_workout"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    weekly_plan_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("weekly_plan.id", ondelete="CASCADE"))
+    scheduled_for: Mapped[date] = mapped_column(Date)
+    activity_type: Mapped[str] = mapped_column(String(40))
+    display_activity: Mapped[str] = mapped_column(String(120))
+    normalized_activity: Mapped[str] = mapped_column(String(40))
+    duration_seconds: Mapped[int] = mapped_column(Integer)
+    expected_intensity: Mapped[str] = mapped_column(String(20))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
+
+    weekly_plan: Mapped[WeeklyPlan] = relationship(back_populates="planned_workouts")
+    meal_options: Mapped[list["PlannedMealOption"]] = relationship(back_populates="planned_workout", cascade="all, delete-orphan")
+
+
+class PlannedMealOption(Base):
+    __tablename__ = "planned_meal_option"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    planned_workout_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("planned_workout.id", ondelete="CASCADE"))
+    category: Mapped[str] = mapped_column(String(40))
+    name: Mapped[str] = mapped_column(String(180))
+    ingredients: Mapped[list] = mapped_column(JSON)
+    preparation_steps: Mapped[list] = mapped_column(JSON)
+    prep_minutes: Mapped[int] = mapped_column(Integer)
+    estimated_calories: Mapped[int] = mapped_column(Integer)
+    protein_g: Mapped[int] = mapped_column(Integer)
+    carbs_g: Mapped[int] = mapped_column(Integer)
+    fat_g: Mapped[int] = mapped_column(Integer)
+    rationale: Mapped[str] = mapped_column(String(2000))
+    recovery_match_score: Mapped[float] = mapped_column(Float)
+    selected: Mapped[bool] = mapped_column(Boolean, default=False)
+    selected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+    planned_workout: Mapped[PlannedWorkout] = relationship(back_populates="meal_options")
+
+
+class GroceryLine(Base):
+    __tablename__ = "grocery_line"
+    __table_args__ = (UniqueConstraint("weekly_plan_id", "identity_key", name="uq_grocery_line_plan_identity"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    weekly_plan_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("weekly_plan.id", ondelete="CASCADE"))
+    identity_key: Mapped[str] = mapped_column(String(220))
+    name: Mapped[str] = mapped_column(String(160))
+    normalized_name: Mapped[str] = mapped_column(String(160))
+    quantity: Mapped[float] = mapped_column(Float)
+    unit: Mapped[str] = mapped_column(String(30))
+    category: Mapped[str] = mapped_column(String(40))
+    available_at_home: Mapped[bool] = mapped_column(Boolean, default=False)
+    checked: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
+
+    weekly_plan: Mapped[WeeklyPlan] = relationship(back_populates="grocery_lines")
 

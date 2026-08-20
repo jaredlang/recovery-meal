@@ -50,6 +50,50 @@ test("a new user completes the recovery-meal journey", async ({ page }, testInfo
   }
   await captureCheckpoint(page, testInfo, "02-pantry-populated");
 
+  await page.getByRole("link", { name: "Plan" }).click();
+  await expect(page.getByRole("heading", { name: "Plan your training week" })).toBeVisible();
+  await page.getByLabel("Activity").fill("Trail running");
+  await page.getByLabel("Duration (minutes)").fill("45");
+  await page.getByLabel("Expected intensity").selectOption("moderate");
+  const createPlannedWorkout = page.waitForResponse(response =>
+    response.request().method() === "POST" && response.url().endsWith("/plan/workouts"),
+  );
+  await page.getByRole("button", { name: "Add workout" }).click();
+  expect((await createPlannedWorkout).ok()).toBe(true);
+
+  await expect(page.getByText(/Trail running · 45 min · Moderate/i)).toBeVisible();
+  await expect(page.getByText("Meal not selected")).toBeVisible();
+  await page.getByRole("button", { name: /Trail running · 45 min · Moderate/i }).click();
+  const generatePlannedMeals = page.waitForResponse(response =>
+    response.request().method() === "POST" && /\/plan\/workouts\/[^/]+\/meal-options$/.test(new URL(response.url()).pathname),
+  );
+  await page.getByRole("button", { name: "Choose recovery meal" }).click();
+  expect((await generatePlannedMeals).ok()).toBe(true);
+  await expect(page.getByRole("button", { name: /Simple Oat Recovery Bowl/i })).toBeVisible();
+
+  const selectPlannedMeal = page.waitForResponse(response =>
+    response.request().method() === "POST" && /\/plan\/meal-options\/[^/]+\/select$/.test(new URL(response.url()).pathname),
+  );
+  await page.getByRole("button", { name: /Simple Oat Recovery Bowl/i }).click();
+  expect((await selectPlannedMeal).ok()).toBe(true);
+  await expect(page.getByText(/Selected: Simple Oat Recovery Bowl/i)).toBeVisible();
+  await expect(page.getByText("Already at home")).toBeVisible();
+  await expect(page.locator(".at-home").getByText(/chicken/i)).toBeVisible();
+  await expect(page.getByRole("checkbox")).toHaveCount(2);
+  const checkGroceryLine = page.waitForResponse(response =>
+    response.request().method() === "PATCH" && /\/plan\/grocery-lines\/[^/]+$/.test(new URL(response.url()).pathname),
+  );
+  await page.getByRole("checkbox").first().click();
+  expect((await checkGroceryLine).ok()).toBe(true);
+  await expect(page.getByRole("checkbox").first()).toBeChecked();
+
+  await page.getByRole("button", { name: "Collapse week" }).click();
+  await expect(page.getByRole("button", { name: "Expand week" })).toBeVisible();
+  await expect(page.getByLabel("Next seven days")).toHaveCount(0);
+  await page.getByRole("button", { name: "Expand week" }).click();
+  await expect(page.getByLabel("Next seven days")).toBeVisible();
+  await captureCheckpoint(page, testInfo, "03-weekly-plan");
+
   await page.getByRole("link", { name: "Get Meal" }).click();
   await expect(page.getByRole("heading", { name: "Upload your workout" })).toBeVisible();
   await page.locator('input[type="file"][accept*=".gpx"]').setInputFiles(fixture);
@@ -60,7 +104,7 @@ test("a new user completes the recovery-meal journey", async ({ page }, testInfo
   await page.getByLabel("Duration (minutes)").fill("45");
   await page.getByLabel("Pre-workout weight (kg)").fill("70");
   await page.getByLabel("Post-workout weight (kg)").fill("69.5");
-  await captureCheckpoint(page, testInfo, "03-workout-review");
+  await captureCheckpoint(page, testInfo, "04-workout-review");
   await page.getByRole("button", { name: /Calculate recovery & continue/ }).click();
 
   await expect(page.getByRole("heading", { name: "Meal options" })).toBeVisible();
@@ -80,7 +124,7 @@ test("a new user completes the recovery-meal journey", async ({ page }, testInfo
   await expect.poll(async () => mealImages.evaluateAll(images =>
     images.every(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0),
   )).toBe(true);
-  await captureCheckpoint(page, testInfo, "04-meal-options");
+  await captureCheckpoint(page, testInfo, "05-meal-options");
 
   const favoriteResponse = page.waitForResponse(response =>
     response.request().method() === "POST" && response.url().endsWith("/favorite"),
@@ -101,25 +145,25 @@ test("a new user completes the recovery-meal journey", async ({ page }, testInfo
   await expect(page.getByRole("heading", { name: /Nutrition/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /I'm making this/ })).toContainText("✓");
   await expect(page.getByRole("img", { name: mealName! })).toBeVisible();
-  await captureCheckpoint(page, testInfo, "05-meal-detail");
+  await captureCheckpoint(page, testInfo, "06-meal-detail");
 
   await page.getByRole("link", { name: "Favorites" }).click();
   await expect(page.getByRole("heading", { name: "Favorites" })).toBeVisible();
   await expect(page.getByRole("heading", { name: mealName! })).toBeVisible();
   await expect(page.getByRole("img", { name: mealName! })).toBeVisible();
-  await captureCheckpoint(page, testInfo, "06-favorites");
+  await captureCheckpoint(page, testInfo, "07-favorites");
 
   await page.getByRole("link", { name: "Home" }).click();
   await expect(page.getByRole("heading", { name: /Good (morning|afternoon|evening), Jordan!/ })).toBeVisible();
   await expect(page.getByText("Latest workout")).toBeVisible();
   await expect(page.getByText("Your latest recovery meal")).toBeVisible();
   await expect(page.getByRole("heading", { name: mealName! })).toBeVisible();
-  await captureCheckpoint(page, testInfo, "07-home-dashboard");
+  await captureCheckpoint(page, testInfo, "08-home-dashboard");
 
   await page.getByRole("link", { name: "Progress" }).click();
   await expect(page.getByRole("button", { name: "Today" })).toBeVisible();
   await expect(page.getByRole("link", { name: /View workout/ })).toBeVisible();
   await expect(page.getByText(/1-day streak/)).toBeVisible();
-  await captureCheckpoint(page, testInfo, "08-progress");
+  await captureCheckpoint(page, testInfo, "09-progress");
   expect(serverErrors, `Unexpected server responses:\n${serverErrors.join("\n")}`).toEqual([]);
 });

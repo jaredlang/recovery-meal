@@ -1,4 +1,4 @@
-import type { Account, Activity, Dashboard, Favorite, Inventory, Meal, Profile, Progress, Recovery, Workout } from "./types";
+import type { Account, Activity, Dashboard, Favorite, Inventory, Meal, PlannedWorkout, PlannedWorkoutInput, Profile, Progress, Recovery, SubstitutionSuggestion, WeeklyPlan, Workout } from "./types";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 export const MEDIA = API.replace(/\/api\/v1$/, "");
@@ -37,3 +37,12 @@ export const getFavorite = (id: string) => request<Favorite>(`/favorites/${id}`)
 export const deleteFavorite = (id: string) => request<void>(`/favorites/${id}`, { method: "DELETE" });
 export const getDashboard = () => request<Dashboard>("/dashboard");
 export const getProgress = (month: string) => request<Progress>(`/progress?month=${month}`);
+export const getPlan = () => request<WeeklyPlan>("/plan");
+export const createPlannedWorkout = (value: PlannedWorkoutInput) => request<PlannedWorkout>("/plan/workouts", json("POST", value));
+export const updatePlannedWorkout = (id: string, value: PlannedWorkoutInput) => request<PlannedWorkout>(`/plan/workouts/${id}`, json("PUT", value));
+export const deletePlannedWorkout = (id: string) => request<void>(`/plan/workouts/${id}`, { method: "DELETE" });
+export const generatePlannedMeals = (id: string) => request<PlannedWorkout>(`/plan/workouts/${id}/meal-options`, json("POST", {}));
+export const selectPlannedMeal = (id: string) => request<WeeklyPlan>(`/plan/meal-options/${id}/select`, { method: "POST" });
+export const getSubstitutions = (mealId: string, ingredientName: string) => request<{ ingredient_name: string; suggestions: SubstitutionSuggestion[] }>(`/plan/meal-options/${mealId}/substitutions?ingredient_name=${encodeURIComponent(ingredientName)}`);
+export const replacePlannedIngredient = (mealId: string, ingredientName: string, replacementName: string) => request<WeeklyPlan>(`/plan/meal-options/${mealId}/substitutions`, json("POST", { ingredient_name: ingredientName, replacement_name: replacementName }));
+export const checkGroceryLine = (id: string, checked: boolean) => request<WeeklyPlan>(`/plan/grocery-lines/${id}`, json("PATCH", { checked }));

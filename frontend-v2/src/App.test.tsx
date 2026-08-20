@@ -9,6 +9,7 @@ vi.mock("./api", async importOriginal => {
     ...actual,
     getAccount: vi.fn(), getDashboard: vi.fn(), getInventory: vi.fn(), addInventory: vi.fn(), deleteInventory: vi.fn(),
     getRecovery: vi.fn(), getMeals: vi.fn(), getMeal: vi.fn(), generateMeals: vi.fn(), generateImage: vi.fn(), favoriteMeal: vi.fn(), unfavoriteMeal: vi.fn(), selectMeal: vi.fn(),
+    getPlan: vi.fn(), createPlannedWorkout: vi.fn(), updatePlannedWorkout: vi.fn(), deletePlannedWorkout: vi.fn(), generatePlannedMeals: vi.fn(), selectPlannedMeal: vi.fn(), getSubstitutions: vi.fn(), replacePlannedIngredient: vi.fn(), checkGroceryLine: vi.fn(),
   };
 });
 
@@ -65,5 +66,35 @@ describe("Recovery Meal V2", () => {
     await waitFor(() => expect(mocked.selectMeal).toHaveBeenCalledWith("meal-1"));
     expect(await screen.findByText(/Meal selected\. You're all set to make it\./i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /I'm making this/i })).toBeDisabled();
+  });
+
+  it("summarizes selected planned meals in an accordion and shows pantry-aware groceries", async () => {
+    history.replaceState({}, "", "/plan");
+    mocked.getPlan.mockResolvedValue({
+      starts_on: "2026-08-19", ends_on: "2026-08-25",
+      workouts: [{ id: "planned-1", scheduled_for: "2026-08-20", activity_type: "running", display_activity: "Trail running", normalized_activity: "running", duration_minutes: 45, expected_intensity: "high", recovery_target: { protein_g: { low: 20, high: 30 }, carbs_g: { low: 55, high: 70 } }, needs_meal_selection: false, meal_options: [{ id: "planned-meal-1", category: "best_recovery_match", name: "Chicken rice bowl", ingredients: [{ name: "chicken", quantity: 150, unit: "g", available: false }, { name: "rice", quantity: 250, unit: "g", available: true }], preparation_steps: ["Cook and serve."], prep_minutes: 20, estimated_calories: 600, protein_g: 35, carbs_g: 70, fat_g: 20, rationale: "Balanced recovery meal", recovery_match_score: 1, selected: true, selected_at: "2026-08-19T12:00:00Z" }] }],
+      grocery_lines: [{ id: "grocery-1", name: "chicken", quantity: 150, unit: "g", category: "Protein", available_at_home: false, checked: false }, { id: "grocery-2", name: "rice", quantity: 250, unit: "g", category: "Grains and Bakery", available_at_home: true, checked: false }],
+    });
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: "Plan your training week" })).toBeInTheDocument();
+    expect(screen.getByText(/Trail running · 45 min · High/i)).toBeInTheDocument();
+    expect(screen.getByText(/Recovery target: 20-30g protein · 55-70g carbs/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected: Chicken rice bowl · 20 min · 600 kcal/i)).toBeInTheDocument();
+    expect(screen.getByText("Protein")).toBeInTheDocument();
+    expect(screen.getByText("From 1 selected recovery meal · 2 ingredients")).toBeInTheDocument();
+    expect(screen.getByText("Already at home")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "+ Add planned workout" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Collapse week" }));
+    expect(screen.getByRole("button", { name: "Expand week" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Next seven days")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "+ Add planned workout" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Expand week" }));
+    expect(await screen.findByLabelText("Next seven days")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "+ Add planned workout" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /trail running/i }));
+    expect(await screen.findByRole("heading", { name: "Recovery meal" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Change meal" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("checkbox"));
+    await waitFor(() => expect(mocked.checkGroceryLine).toHaveBeenCalledWith("grocery-1", true));
   });
 });

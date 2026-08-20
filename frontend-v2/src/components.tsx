@@ -5,7 +5,7 @@ import type { Account, Meal } from "./types";
 
 const nav = [
   ["/", "⌂", "Home"], ["/get-meal", "♨", "Get Meal"], ["/pantry", "▣", "Pantry"],
-  ["/favorites", "♡", "Favorites"], ["/progress", "▥", "Progress"],
+  ["/plan", "□", "Plan"], ["/favorites", "♡", "Favorites"], ["/progress", "▥", "Progress"],
 ];
 
 export function Layout({ path, children }: { path: string; children: ReactNode }) {
